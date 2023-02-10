@@ -55,7 +55,7 @@ def send_slack_message(channel, text):
 
 
 @app.route('/healthcheck')
-def index():
+def health():
     return 'OK'
 
 @app.route('/slack', methods=['POST'])
