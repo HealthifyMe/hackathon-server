@@ -70,7 +70,7 @@ def run_redshift_query(query_to_exec):
     print('query', query_to_exec)
     conn = _get_redshift_connection()
     cur = conn.cursor()
-    cur.execute(query_to_exec)
+    cur.execute(str(query_to_exec))
     rows = cur.fetchall()
     return rows
 
