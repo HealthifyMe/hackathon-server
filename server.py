@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from gpt_index import GPTSimpleVectorIndex, SimpleDirectoryReader, GPTListIndex, LLMPredictor
 from slackclient import SlackClient
 import os
+import psycopg2
 
 index = GPTSimpleVectorIndex.load_from_disk('index.json')
 
@@ -54,6 +55,30 @@ def send_slack_message(channel, text):
     )
 
 
+def _get_redshift_connection():
+    """Returns a connection to redshift DB."""
+    return psycopg2.connect(
+        host='healthifyme-data-warehouse-compute-optimized.c6ybhpxqkwfl.ap-south-1.redshift.amazonaws.com',
+        dbname='healthifyme',
+        port=5439,
+        user=os.environ.get('REDSHIFT_USER'),
+        password=os.environ.get('REDSHIFT_PASSWORD')
+    )
+
+def run_redsihft_query(query):
+    conn = _get_redshift_connection()
+    cur = conn.cursor()
+    cur.execute(query)
+    rows = cur.fetchall()
+    return rows
+
+def convert_table_to_string_markdown(rows):
+    message = ''
+    for row in rows:
+        message += ' | '.join(row)
+        message += "'"
+    return message
+
 @app.route('/healthcheck')
 def health():
     return 'OK'
@@ -77,7 +102,12 @@ def slack():
         question = question.replace('<@U04NSGRKKCN>', '')
         question = f'get postgrsql query for `{question}`'
         query = index.query(question)
-        send_slack_message(channel, query)
+        rows = run_redsihft_query(query)
+        if not rows:
+            send_slack_message(channel, 'No results found')
+            return 'OK'
+        message = convert_table_to_string_markdown(rows)
+        send_slack_message(channel, message)
         return 'OK'
     except Exception as e:
         # slack send to channel
