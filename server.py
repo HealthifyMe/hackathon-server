@@ -81,7 +81,7 @@ def convert_table_to_string_markdown(rows, column_names):
     x.field_names = column_names
     for row in rows:
         x.add_row(row)
-    return str(x)
+    return f"```{str(x)}```"
 
 @app.route('/healthcheck')
 def health():
