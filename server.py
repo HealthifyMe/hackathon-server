@@ -67,6 +67,7 @@ def _get_redshift_connection():
     )
 
 def run_redsihft_query(query):
+    print('query', query)
     conn = _get_redshift_connection()
     cur = conn.cursor()
     cur.execute(query)
@@ -103,6 +104,7 @@ def slack():
         question = question.replace('<@U04NSGRKKCN>', '')
         question = f'get postgrsql query for `{question}`'
         query = index.query(question)
+        print('query', query)
         rows = run_redsihft_query(query)
         print('rows', rows)
         if not rows:
