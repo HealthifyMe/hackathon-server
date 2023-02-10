@@ -63,7 +63,7 @@ def slack():
     body = request.get_json()
     # flask get headers
     print('headers', request.headers)
-    is_retry = bool(request.headers.get('HTTP_X_SLACK_RETRY_NUM'))
+    is_retry = bool(request.headers['X-Slack-Retry-Num'])
     if is_retry:
         return 'OK'
     channel = body['event']['channel']
