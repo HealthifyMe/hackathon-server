@@ -4,6 +4,7 @@ from slackclient import SlackClient
 import os
 import psycopg2
 import traceback
+from prettytable import PrettyTable
 
 index = GPTSimpleVectorIndex.load_from_disk('index.json')
 
