@@ -3,6 +3,7 @@ from gpt_index import GPTSimpleVectorIndex, SimpleDirectoryReader, GPTListIndex,
 from slackclient import SlackClient
 import os
 import psycopg2
+import traceback
 
 index = GPTSimpleVectorIndex.load_from_disk('index.json')
 
@@ -112,7 +113,8 @@ def slack():
         return 'OK'
     except Exception as e:
         # slack send to channel
-        print(e)
+        # print error stack trace
+        traceback.print_exc()
         send_slack_message(channel, str(e))
         return 'OK'
 
