@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from gpt_index import GPTSimpleVectorIndex, SimpleDirectoryReader, GPTListIndex, LLMPredictor
-from slack_client import SlackClient
+from slackclient import SlackClient
 import os
 
 index = GPTSimpleVectorIndex.load_from_disk('index.json')
@@ -46,6 +46,14 @@ client = SlackClient(os.environ.get('SLACK_TOKEN'))
 #     'event_context': '4-eyJldCI6ImFwcF9tZW50aW9uIiwidGlkIjoiVDAyTDMyMTY2IiwiYWlkIjoiQTA0UEJQUTJDUTEiLCJjaWQiOiJDMDROWjdSRFNVVCJ9'
 # }
 
+def send_slack_message(channel, text):
+    post_message = client.api_call(
+        method=constants.API_POST_MESSAGE_METHOD,
+        channel=channel,
+        text=message
+    )
+
+
 @app.route('/healthcheck')
 def index():
     return 'OK'
@@ -60,11 +68,11 @@ def login():
         if challenge:
             return challenge
         query = ' '.join(body['event']['text'].split(' ', 1)[1:])
-        client.chat_postMessage(channel=channel, text=query)
+        send_slack_message(channel, query)
         return 'OK'
     except Exception as e:
         # slack send to channel
-        client.chat_postMessage(channel=channel, text=str("Sorry, cant answer at the moment"))
+        send_slack_message(channel, str(e))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4141)
