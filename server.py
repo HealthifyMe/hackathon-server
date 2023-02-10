@@ -59,19 +59,24 @@ def index():
     return 'OK'
 
 @app.route('/slack', methods=['POST'])
-def login():
+def slack():
     body = request.get_json()
     channel = body['event']['channel']
+    send_slack_message(channel, 'hang on fetching results...')
     try:
         print(body)
         challenge = body.get('challenge')
         if challenge:
             return challenge
-        query = ' '.join(body['event']['text'].split(' ', 1)[1:])
+        question = body['event']['text']
+        question = question.replace('<@U04NSGRKKCN>', '')
+        question = f'get postgrsql query for `{question}`'
+        query = index.query(question)
         send_slack_message(channel, query)
         return 'OK'
     except Exception as e:
         # slack send to channel
+        print(e)
         send_slack_message(channel, str(e))
 
 if __name__ == '__main__':
