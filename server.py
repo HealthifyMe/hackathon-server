@@ -1,6 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session
+from gpt_index import GPTSimpleVectorIndex, SimpleDirectoryReader, GPTListIndex, LLMPredictor
+from slack_client import SlackClient
+import os
+
+index = GPTSimpleVectorIndex.load_from_disk('index.json')
 
 app = Flask(__name__)
+
+client = SlackClient(os.environ.get('SLACK_TOKEN'))
 
 # {
 #     'token': 'plVdZEwXAepvQlHzMRp4MnZA', 
@@ -46,11 +53,18 @@ def index():
 @app.route('/slack', methods=['POST'])
 def login():
     body = request.get_json()
-    print(body)
-    challenge = body.get('challenge')
-    if challenge:
-        return challenge
-    return 'OK'
+    channel = body['event']['channel']
+    try:
+        print(body)
+        challenge = body.get('challenge')
+        if challenge:
+            return challenge
+        query = ' '.join(body['event']['text'].split(' ', 1)[1:])
+        client.chat_postMessage(channel=channel, text=query)
+        return 'OK'
+    except Exception as e:
+        # slack send to channel
+        client.chat_postMessage(channel=channel, text=str("Sorry, cant answer at the moment"))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4141)
