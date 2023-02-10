@@ -103,6 +103,7 @@ def slack():
         question = f'get postgrsql query for `{question}`'
         query = index.query(question)
         rows = run_redsihft_query(query)
+        print('rows', rows)
         if not rows:
             send_slack_message(channel, 'No results found')
             return 'OK'
