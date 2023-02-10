@@ -140,7 +140,7 @@ def slack():
     body = request.get_json()
     # flask get headers
     print('headers', request.headers)
-    is_retry = bool(request.headers['X-Slack-Retry-Num'])
+    is_retry = bool(int(request.headers['X-Slack-Retry-Num']) - 1)
     if is_retry:
         print('retrying *********')
         return 'OK'
