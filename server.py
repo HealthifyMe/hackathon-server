@@ -5,6 +5,7 @@ import os
 import psycopg2
 import traceback
 from prettytable import PrettyTable
+import openai
 
 index = GPTSimpleVectorIndex.load_from_disk('index.json')
 
@@ -49,6 +50,40 @@ client = SlackClient(os.environ.get('SLACK_TOKEN'))
 #     'event_context': '4-eyJldCI6ImFwcF9tZW50aW9uIiwidGlkIjoiVDAyTDMyMTY2IiwiYWlkIjoiQTA0UEJQUTJDUTEiLCJjaWQiOiJDMDROWjdSRFNVVCJ9'
 # }
 
+npu_example_queries = """
+postgresql to get npu users who connected to nutrition coach in last 5 days
+postgresql to get npu users who booked nutrition coach in last 5 days
+postgresql to get npu users who booked got nutrition dietplan from coach in last 5 days
+postgresql to get npu users who booked nutrition coach in last 24 hours
+postgresql to get npu users who connected to fitness coach in last 5 days
+postgresql to get npu users who booked fitness coach in last 5 days
+postgresql to get npu users who booked got fitness dietplan from coach in last 5 days
+postgresql to get npu users who booked fitness coach in last 24 hours
+postgresql to get npu users who connected to yoga coach in last 5 days
+postgresql to get npu users who booked yoga coach in last 5 days
+postgresql to get npu users who booked got yoga dietplan from coach in last 5 days
+postgresql to get npu users who booked yoga coach in last 24 hours
+postgresql to get npu users who booked coach manually vs auto for today
+postgresql to get npu users who booked coach manually vs auto for yesterday
+postgresql to get npu users of one coach plan who booked coach manually vs auto for today
+postgresql to get npu users of one coach plan who booked coach manually vs auto for yesterday
+postgresql to get npu users of one coach plan who booked coach manually vs auto for current week
+postgresql to get npu users of two coach plan who booked coach manually vs auto for today
+postgresql to get npu users of two coach plan who booked coach manually vs auto for yesterday
+postgresql to get npu users of two coach plan who booked coach manually vs auto for current week
+postgresql to get npu users of three coach plan who booked coach manually vs auto for today
+postgresql to get npu users of three coach plan who booked coach manually vs auto for yesterday
+postgresql to get npu users of three coach plan who booked coach manually vs auto for current week
+postgresql to get npu rating count for today
+postgresql to get avg npu rating for today
+postgresql to get npu rating count for current week
+postgresql to get avg npu rating for present week
+postgresql to get npu rating count for current month
+postgresql to get npu avg_npu_day for current month
+postgresql to get get max users assigned to a hot
+postgresql to get count of users who got yoga plan yesterday
+"""
+
 def send_slack_message(channel, text):
     post_message = client.api_call(
         method='chat.postMessage',
@@ -82,6 +117,19 @@ def convert_table_to_string_markdown(rows, column_names):
     for row in rows:
         x.add_row(row)
     return f"```{str(x)}```"
+
+def find_example_npu_queries_using_openai(query):
+    prompt = "find similar looking texts for `{query} from \n {examples}`".format(query=query, examples=npu_example_queries)
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=prompt,
+        temperature=0,
+        max_tokens=100,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0.6,
+    )
+    return response.choices[0].text
 
 @app.route('/healthcheck')
 def health():
@@ -120,7 +168,9 @@ def slack():
         # print error stack trace
         traceback.print_exc()
         no_response_message = 'Not able to find proper results, can you please rephrase your question?'
-        send_slack_message(channel, no_response_message)
+        examples = find_example_npu_queries_using_openai(question)
+        out_message = f"{no_response_message} \n These examples might help, \n ```{examples}```"
+        send_slack_message(channel, out_message)
         return 'OK'
 
 if __name__ == '__main__':
