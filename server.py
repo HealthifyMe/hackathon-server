@@ -72,14 +72,15 @@ def run_redshift_query(query_to_exec):
     cur = conn.cursor()
     cur.execute(str(query_to_exec))
     rows = cur.fetchall()
-    return rows
+    column_names = [desc[0] for desc in cur.description]
+    return rows, column_names 
 
-def convert_table_to_string_markdown(rows):
-    message = ''
+def convert_table_to_string_markdown(rows, column_names):
+    x = PrettyTable()
+    x.field_names = column_names
     for row in rows:
-        message += ' | '.join(row)
-        message += "'"
-    return message
+        x.add_row(row)
+    return str(x)
 
 @app.route('/healthcheck')
 def health():
@@ -105,12 +106,12 @@ def slack():
         question = f'get postgrsql query for `{question}`'
         query_to_exec = index.query(question)
         print('query', query_to_exec)
-        rows = run_redshift_query(query_to_exec)
+        rows, column_names = run_redshift_query(query_to_exec)
         print('rows', rows)
         if not rows:
             send_slack_message(channel, 'No results found')
             return 'OK'
-        message = convert_table_to_string_markdown(rows)
+        message = convert_table_to_string_markdown(rows, column_names)
         send_slack_message(channel, message)
         return 'OK'
     except Exception as e:
