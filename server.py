@@ -143,6 +143,7 @@ def slack():
     is_retry = bool(request.headers['X-Slack-Retry-Num'])
     if is_retry:
         print('retrying *********')
+        return 'OK'
     channel = body['event']['channel']
     send_slack_message(channel, 'hang on fetching results...')
     try:
