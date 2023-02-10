@@ -66,11 +66,11 @@ def _get_redshift_connection():
         password=os.environ.get('REDSHIFT_PASSWORD')
     )
 
-def run_redsihft_query(query):
+def run_redshift_query(query_to_exec):
     print('query', query)
     conn = _get_redshift_connection()
     cur = conn.cursor()
-    cur.execute(query)
+    cur.execute(query_to_exec)
     rows = cur.fetchall()
     return rows
 
@@ -103,9 +103,9 @@ def slack():
         question = body['event']['text']
         question = question.replace('<@U04NSGRKKCN>', '')
         question = f'get postgrsql query for `{question}`'
-        query = index.query(question)
-        print('query', query)
-        rows = run_redsihft_query(query)
+        query_to_exec = index.query(question)
+        print('query', query_to_exec)
+        rows = run_redshift_query(query_to_exec)
         print('rows', rows)
         if not rows:
             send_slack_message(channel, 'No results found')
