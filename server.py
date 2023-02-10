@@ -50,7 +50,7 @@ def send_slack_message(channel, text):
     post_message = client.api_call(
         method='chat.postMessage',
         channel=channel,
-        text=message
+        text=text
     )
 
 
