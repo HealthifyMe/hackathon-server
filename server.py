@@ -113,6 +113,7 @@ def slack():
         # slack send to channel
         print(e)
         send_slack_message(channel, str(e))
+        return 'OK'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4141)
