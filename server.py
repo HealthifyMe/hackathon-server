@@ -61,6 +61,9 @@ def health():
 @app.route('/slack', methods=['POST'])
 def slack():
     body = request.get_json()
+    is_retry = bool(request.META.get('HTTP_X_SLACK_RETRY_NUM'))
+    if is_retry:
+        return 'OK'
     channel = body['event']['channel']
     send_slack_message(channel, 'hang on fetching results...')
     try:
