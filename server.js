@@ -1,14 +1,19 @@
-// hello world in express js
-// 1. import express
 const express = require('express');
-// 2. create express app
+bodyParser = require('body-parser');
 const app = express();
-// 3. create express route
+app.use(bodyParser.json());
 app.get('/healthcheck', (req, res) => {
     console.log('came here')
     res.send('OK');
 })
-// 4. listen on port 3000
+
+app.post('/slack', (req, res) => {
+    let data = req.body
+    console.log(data)
+    if (data['challenge']) {
+        res.send(data['challenge'])
+    }
+})
 app.listen(4141, () => {
     console.log('Server is listening on port 4141');
 })
