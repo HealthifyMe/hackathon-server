@@ -170,6 +170,7 @@ def slack():
         no_response_message = 'Not able to find proper results, can you please rephrase your question?'
         examples = find_example_npu_queries_using_openai(question)
         out_message = f"{no_response_message} \n These examples might help, \n ```{examples}```"
+        out_message.replace('postgresql to', '')
         send_slack_message(channel, out_message)
         return 'OK'
 
