@@ -119,7 +119,8 @@ def slack():
         # slack send to channel
         # print error stack trace
         traceback.print_exc()
-        send_slack_message(channel, str(e))
+        no_response_message = 'Not able to find proper results, can you please rephrase your question?'
+        send_slack_message(channel, no_response_message)
         return 'OK'
 
 if __name__ == '__main__':
