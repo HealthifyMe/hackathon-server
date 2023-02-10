@@ -8,6 +8,7 @@ from prettytable import PrettyTable
 import openai
 
 index = GPTSimpleVectorIndex.load_from_disk('index.json')
+coach_index = GPTSimpleVectorIndex.load_from_disk('coach_index.json')
 
 app = Flask(__name__)
 
@@ -146,34 +147,56 @@ def slack():
         return 'OK'
     channel = body['event']['channel']
     send_slack_message(channel, 'hang on fetching results...')
-    try:
-        print(body)
-        challenge = body.get('challenge')
-        if challenge:
-            return challenge
-        question = body['event']['text']
-        question = question.replace('<@U04NSGRKKCN>', '')
-        question = f'get postgrsql query for `{question}`'
-        query_to_exec = index.query(question)
-        print('query', query_to_exec)
-        rows, column_names = run_redshift_query(query_to_exec)
-        print('rows', rows)
-        if not rows:
-            send_slack_message(channel, 'No results found')
+    print(body)
+    challenge = body.get('challenge')
+    if challenge:
+        return challenge
+    question = body['event']['text']
+    if 'npu' in question:
+        try:
+            question = question.replace('<@U04NSGRKKCN>', '')
+            question = f'get postgrsql query for `{question}`'
+            query_to_exec = index.query(question)
+            print('query', query_to_exec)
+            rows, column_names = run_redshift_query(query_to_exec)
+            print('rows', rows)
+            if not rows:
+                send_slack_message(channel, 'No results found')
+                return 'OK'
+            message = convert_table_to_string_markdown(rows, column_names)
+            send_slack_message(channel, message)
             return 'OK'
-        message = convert_table_to_string_markdown(rows, column_names)
-        send_slack_message(channel, message)
-        return 'OK'
-    except Exception as e:
-        # slack send to channel
-        # print error stack trace
-        traceback.print_exc()
-        no_response_message = 'Not able to find proper results, can you please rephrase your question?'
-        examples = find_example_npu_queries_using_openai(question)
-        out_message = f"{no_response_message} \n These examples might help, \n ```{examples}```"
-        out_message = out_message.replace('postgresql to', '')
-        send_slack_message(channel, out_message)
-        return 'OK'
+        except Exception as e:
+            # slack send to channel
+            # print error stack trace
+            traceback.print_exc()
+            no_response_message = 'Not able to find proper results, can you please rephrase your question?'
+            examples = find_example_npu_queries_using_openai(question)
+            out_message = f"{no_response_message} \n These examples might help, \n ```{examples}```"
+            out_message = out_message.replace('postgresql to', '')
+            send_slack_message(channel, out_message)
+            return 'OK'
+    else:
+        try:
+            question = question.replace('<@U04NSGRKKCN>', '')
+            question = f'get postgrsql query for `{question}`'
+            query_to_exec = coach_index.query(question)
+            print('query', query_to_exec)
+            rows, column_names = run_redshift_query(query_to_exec)
+            print('rows', rows)
+            if not rows:
+                send_slack_message(channel, 'No results found')
+                return 'OK'
+            message = convert_table_to_string_markdown(rows, column_names)
+            send_slack_message(channel, message)
+            return 'OK'
+        except Exception as e:
+            # slack send to channel
+            # print error stack trace
+            traceback.print_exc()
+            no_response_message = 'Not able to find proper results, can you please rephrase your question?'
+            send_slack_message(channel, no_response_message)
+            return 'OK'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4141)
