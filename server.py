@@ -67,7 +67,7 @@ def _get_redshift_connection():
     )
 
 def run_redshift_query(query_to_exec):
-    print('query', query)
+    print('query', query_to_exec)
     conn = _get_redshift_connection()
     cur = conn.cursor()
     cur.execute(query_to_exec)
