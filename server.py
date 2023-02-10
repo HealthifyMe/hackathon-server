@@ -48,7 +48,7 @@ client = SlackClient(os.environ.get('SLACK_TOKEN'))
 
 def send_slack_message(channel, text):
     post_message = client.api_call(
-        method=constants.API_POST_MESSAGE_METHOD,
+        method='chat.postMessage',
         channel=channel,
         text=message
     )
