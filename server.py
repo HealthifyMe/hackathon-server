@@ -119,7 +119,7 @@ def convert_table_to_string_markdown(rows, column_names):
     return f"```{str(x)}```"
 
 def find_example_npu_queries_using_openai(query):
-    prompt = "find similar looking texts for `{query} from \n {examples}`".format(query=query, examples=npu_example_queries)
+    prompt = f"given these below messages \n```{npu_example_queries}``` find  sentences similar to \n {query}"
     response = openai.Completion.create(
         engine="text-davinci-003",
         prompt=prompt,
